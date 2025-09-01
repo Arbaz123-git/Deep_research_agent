@@ -1,240 +1,324 @@
-# Deep Research Agent 🤖
+# Deep Research Agent
 
-An AI-powered autonomous research assistant that conducts deep, iterative web research with self-validation and quality improvement.
+An AI-powered autonomous research assistant that performs deep, multi-source academic research using web search (Tavily), ArXiv papers, and PubMed articles. Built with LangGraph and designed for comprehensive, validated research with detailed source attribution and academic focus.
 
-## 🌟 What It Does
+## 🌟 Features
 
-This agent goes beyond simple web searches - it conducts **multi-layered research** with intelligent follow-up questions, validates its own findings, and iteratively improves answers until they meet quality standards.
-
-### Key Features
-- **Deep Research**: Conducts 2-3 levels of follow-up research automatically
-- **Self-Validation**: Evaluates answer quality and decides if more research is needed
-- **Smart Summarization**: Handles large web content with AI-powered summarization
-- **Rate Limit Resilience**: Built-in retry mechanisms for API stability
-- **Structured Output**: Professional, well-cited research reports
-- **Flexible Depth**: Configurable research depth (1-3 iterations)
+- **Multi-Source Research**: Seamlessly integrates web search (Tavily), ArXiv papers, and PubMed articles
+- **Deep Research**: Configurable research depth (1-5 levels) with iterative refinement
+- **Academic Validation**: Specialized validation criteria for academic and biomedical content
+- **Detailed Source Attribution**: Complete source tracking with detailed metadata
+- **Smart Summarization**: AI-powered content summarization optimized for academic papers
+- **Rate Limit Resilience**: Advanced retry mechanisms with exponential backoff
+- **Structured Output**: JSON-formatted results with comprehensive source information
+- **Academic Focus**: Specialized handling for academic papers, preprints, and medical literature
+- **Comprehensive Testing**: Built-in testing suite for all components
 
 ## 🚀 Quick Start
 
-### 1. Installation
+### Installation
 
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd Deep_research_agent
+git clone <repository-url>
+cd deep-research-agent
+```
 
-# Install dependencies using uv (recommended)
-uv sync
-
-# Or using pip
+2. Install dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Environment Setup
-
-Create a `.env` file in the root directory:
-
+3. Set up environment variables:
 ```bash
-# Required API Keys
-GROQ_API_KEY=your_groq_api_key_here
-TAVILY_API_KEY=your_tavily_api_key_here
+# Create .env file
+echo "TAVILY_API_KEY=your_tavily_key_here" > .env
+echo "GROQ_API_KEY=your_groq_key_here" >> .env
 ```
 
-Get your API keys:
-- **Groq API**: [console.groq.com](https://console.groq.com/keys)
-- **Tavily API**: [tavily.ai](https://tavily.ai/#api)
-
-### 3. Run Your First Research
-
-```bash
-# Interactive mode
-python deep_agent.py
-
-# Example usage
-Enter your research question: How is AI transforming climate change mitigation?
-Enter maximum research depth (1-3): 2
-```
-
-### 4. Programmatic Usage
+### Required Dependencies
 
 ```python
-from deep_agent import conduct_research
+# Core dependencies
+langgraph>=0.1.0
+langchain-groq>=0.1.0
+langchain-community>=0.1.0
+tavily-python>=0.3.0
+arxiv>=2.1.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+scholarly>=1.7.0
+python-dotenv>=1.0.0
+```
 
-# Conduct research on any topic
-results = conduct_research(
-    question="Impact of quantum computing on pharmaceutical research",
-    max_depth=3
-)
+### Running the Agent
 
-print(f"Quality Score: {results['validation_score']}")
-print(f"Answer: {results['refined_answer']}")
+```python
+from deep_agent1 import research_graph
+
+# Basic usage
+result = research_graph.invoke({
+    "question": "How is CRISPR being used in current medical treatments?",
+    "max_depth": 2,
+    "max_results": 5
+})
+
+print(f"Research completed with score: {result['validation_score']:.2f}")
+print(f"Sources used: {result['sources_used']}")
+print(f"Total sources: {result['sources_used_count']}")
+print(f"Answer: {result['refined_answer']}")
+```
+
+### Running Comprehensive Tests
+
+```python
+from deep_agent1 import comprehensive_test
+
+# Run full system test
+comprehensive_test()
 ```
 
 ## 🏗️ Architecture Overview
 
-The agent uses a **state graph architecture** with these key components:
+### Enhanced Research Pipeline
 
-### Research Pipeline
-```
-Question → Web Search → Draft → Refine → Validate → (Follow-up Research) → Final Answer
-```
+The agent follows a sophisticated 7-node graph-based workflow:
 
-### Core Components
+1. **Research Node**: Unified search across web, ArXiv, and PubMed with detailed metadata
+2. **Draft Node**: Creates initial answer optimized for academic content
+3. **Generate Follow-ups Node**: Identifies research gaps and generates targeted questions
+4. **Research Follow-ups Node**: Performs additional research on identified gaps
+5. **Refine Node**: Refines answer with proper citations and source attribution
+6. **Validation Node**: Specialized academic validation with scoring
+7. **Improve Research Node**: Generates improvement questions based on validation feedback
 
-1. **Research Node**: Searches web using Tavily API
-2. **Draft Node**: Creates initial content from search results
-3. **Refine Node**: Improves structure and adds citations
-4. **Validation Node**: Quality assessment and improvement suggestions
-5. **Follow-up Generator**: Creates intelligent next research questions
+### Enhanced ResearchState
 
-### State Management
 ```python
 class ResearchState(TypedDict):
-    question: str                    # Research topic
-    search_results: List[str]       # Web findings
-    drafted_content: str           # Initial draft
-    refined_answer: str           # Final answer
-    follow_up_questions: List[str] # Next research directions
-    research_depth: int          # Current depth level
-    max_depth: int               # Configurable limit
-    validation_score: float      # Quality assessment (0-1)
-    validation_feedback: str      # Improvement suggestions
-    needs_more_research: bool    # Continue flag
+    question: str                    # Original research question
+    search_results: List[str]        # Summarized search results
+    drafted_content: str              # Initial draft answer
+    refined_answer: str              # Final refined answer
+    follow_up_questions: List[str]   # Generated follow-up questions
+    research_depth: int              # Current research depth
+    max_depth: int                  # Maximum research depth (1-5)
+    validation_score: float          # Quality score (0.0-1.0)
+    validation_feedback: str          # Detailed validation feedback
+    needs_more_research: bool        # Flag for additional research
+    sources_used: List[str]          # List of source types used
+    source_counts: dict              # Count by source type
+    detailed_sources: List[dict]     # Complete source metadata
+    max_results: int                # Results per source type
 ```
 
-## 📊 Example Output
+### Multi-Source Integration
 
-### Research Question: "How is AI transforming renewable energy?"
+#### Web Search (Tavily)
+- General web content and news articles
+- Real-time information updates
+- Comprehensive topic coverage
 
-**Validation Score**: 0.87/1.0
+#### ArXiv Integration
+- Latest research papers and preprints
+- Physics, mathematics, computer science focus
+- Paper metadata: title, authors, abstract, publication date, DOI
 
-**Research Results**:
+#### PubMed Integration
+- Biomedical and medical literature
+- Author information, abstracts, publication dates
+- DOI and PubMed ID tracking
+
+### LLM Configuration
+
+- **Primary LLM**: ChatGroq with "openai/gpt-oss-120b" for research and drafting
+- **Validation LLM**: ChatGroq with "moonshotai/kimi-k2-instruct" for quality assessment
+- **Temperature**: 0 for consistent, factual responses
+- **Retry Logic**: Exponential backoff with 3 retries
+
+## 📊 Enhanced Validation Criteria
+
+### Academic-Specific Validation
+Research is validated across dimensions tailored for academic content:
+
+1. **Accuracy of Scientific Concepts**: Correct interpretation of technical terms
+2. **Research Findings Interpretation**: Proper understanding of study results
+3. **Limitation Recognition**: Acknowledgment of study constraints
+4. **Citation Quality**: Proper academic referencing
+5. **Explanation Clarity**: Clear communication of complex concepts
+
+### Validation Score Interpretation
+- **0.8-1.0**: Excellent quality research
+- **0.6-0.79**: Good quality, minor improvements possible
+- **0.4-0.59**: Adequate, may benefit from additional research
+- **<0.4**: Requires significant improvement
+
+## 📤 Enhanced Output Format
+
+### Structured JSON Response
+
+```json
+{
+  "question": "Original research question",
+  "refined_answer": "Comprehensive research answer with citations",
+  "validation_score": 0.92,
+  "validation_feedback": "Detailed feedback on quality assessment",
+  "research_depth": 2,
+  "sources_used": ["Web", "arXiv", "PubMed"],
+  "sources_used_count": 15,
+  "source_counts": {
+    "Web": 8,
+    "arXiv": 4,
+    "PubMed": 3
+  },
+  "detailed_sources": [
+    {
+      "source_type": "arXiv",
+      "title": "Paper Title",
+      "authors": ["Author1", "Author2"],
+      "published": "2024-01-15",
+      "url": "https://arxiv.org/abs/...",
+      "doi": "arXiv:2401.12345",
+      "content": "Paper abstract preview..."
+    }
+  ]
+}
 ```
-## AI's Revolutionary Impact on Renewable Energy
 
-### 1. Solar Energy Optimization
-AI algorithms are increasing solar panel efficiency by 15-25% through:
-- Dynamic positioning systems that track sun movement
-- Predictive cleaning schedules based on weather patterns
-- Real-time performance monitoring and fault detection
+### Source Attribution Features
+- **Detailed source descriptions** for each type
+- **Author information** for academic papers
+- **Publication dates** for recency assessment
+- **DOI/URL tracking** for verification
+- **Content previews** for quick reference
 
-### 2. Wind Power Enhancement
-Machine learning models optimize wind farm operations:
-- Turbine blade angle adjustments for maximum energy capture
-- Predictive maintenance reducing downtime by 30%
-- Grid integration optimization during peak demand
+## 🔧 Advanced Configuration
 
-[Sources: MIT Tech Review 2024, Nature Energy Journal, IEA Reports]
-```
-
-## 🔧 Configuration Options
-
-### Research Depth Settings
-- **Depth 1**: Single research cycle (fastest)
-- **Depth 2**: One follow-up research (balanced)
-- **Depth 3**: Multiple follow-ups (most comprehensive)
-
-### API Models Used
-- **Primary LLM**: GPT-4 level (openai/gpt-oss-120b)
-- **Validation LLM**: Kimi K2 (moonshotai/kimi-k2-instruct)
-- **Search Engine**: Tavily (max 3 results per query)
-
-## 📈 Performance Benchmarks
-
-| Metric | Value |
-|--------|--------|
-| **Average Research Time** | 45-90 seconds |
-| **Quality Score Range** | 0.75-0.95 |
-| **Success Rate** | 99.5% |
-| **API Reliability** | 3-retry mechanism |
-
-## 🛠️ Development
-
-### Project Structure
-```
-Deep_research_agent/
-├── deep_agent.py          # Main research agent
-├── demo.ipynb            # Interactive examples
-├── pyproject.toml        # Project dependencies
-├── .env.example         # Environment template
-├── research_results.txt  # Latest research output
-└── README.md            # This file
-```
-
-### Key Dependencies
-- **langchain-groq**: LLM integration
-- **langgraph**: State graph management
-- **tavily-search**: Web search API
-- **python-dotenv**: Environment management
-
-### Running Tests
-```bash
-# Test the agent with sample queries
-python -c "from deep_agent import conduct_research; print(conduct_research('Test query', max_depth=1))"
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **API Key Errors**
-   ```bash
-   # Check environment variables
-   python -c "import os; print(os.getenv('GROQ_API_KEY'))"
-   ```
-
-2. **Rate Limiting**
-   - Built-in exponential backoff retry
-   - Maximum 3 retries with increasing delays
-
-3. **Long Content Handling**
-   - Automatic summarization for content >500 chars
-   - Smart truncation with context preservation
-
-4. **Network Issues**
-   - Check internet connectivity
-   - Verify API endpoints are accessible
-
-## 🚀 Advanced Usage
-
-### Custom Research Prompts
-Modify the prompt templates in `deep_agent.py`:
+### Custom Research Parameters
 
 ```python
-# In draft_node function
-custom_prompt = f"""
-Research {topic} specifically for {audience}.
-Focus on {specific_aspect} with {timeframe} data.
-Include {format_requirements}.
-"""
+# Configure research depth and source limits
+result = research_graph.invoke({
+    "question": "Your research question",
+    "max_depth": 3,           # 1-5 levels of research depth
+    "max_results": 5          # Results per source type
+})
 ```
 
-### Batch Processing
+### Source Prioritization
+
 ```python
-questions = ["Topic 1", "Topic 2", "Topic 3"]
-for q in questions:
-    results = conduct_research(q, max_depth=2)
-    save_results(q, results)
+# Example showing source usage distribution
+config = {
+    "question": "Quantum computing applications",
+    "max_depth": 2,
+    "max_results": 3
+}
+# System automatically balances sources based on topic relevance
 ```
+
+### Error Handling and Reliability
+
+- **Safe API calls** with automatic retry
+- **Graceful degradation** when sources are unavailable
+- **Comprehensive error logging** for debugging
+- **Fallback strategies** for failed searches
+
+## 🧪 Comprehensive Testing
+
+### Test Suite Components
+
+#### Individual Source Testing
+```python
+# Test each source independently
+arxiv_results = search_arxiv("neural networks", max_results=3)
+pubmed_results = search_pubmed("machine learning", max_results=3)
+unified_results = unified_search("AI applications", max_results=5)
+```
+
+#### Full Pipeline Testing
+```python
+# Complete system test with academic focus
+test_question = "Explain how transformer architectures are used in drug discovery"
+result = research_graph.invoke({
+    "question": test_question,
+    "max_depth": 2,
+    "max_results": 3
+})
+```
+
+#### Performance Metrics
+- **Time per research phase** tracking
+- **API call counts** by source type
+- **Success rates** for each search provider
+- **Validation score distribution** analysis
+
+## 📈 Example Use Cases
+
+### Academic Literature Review
+```python
+# Comprehensive review of recent advances
+result = research_graph.invoke({
+    "question": "Recent advances in transformer architectures for protein folding prediction",
+    "max_depth": 3,
+    "max_results": 5
+})
+```
+
+### Medical Research Analysis
+```python
+# Biomedical research with PubMed focus
+result = research_graph.invoke({
+    "question": "CRISPR applications in treating genetic disorders: current status and challenges",
+    "max_depth": 2,
+    "max_results": 4
+})
+```
+
+### Technology Assessment
+```python
+# Comparative analysis with academic sources
+result = research_graph.invoke({
+    "question": "Compare GPT-based models with traditional NLP approaches for scientific text analysis",
+    "max_depth": 2,
+    "max_results": 3
+})
+```
+
+## 🔮 Future Enhancements
+
+### Planned Improvements
+- **Semantic search** integration for better relevance
+- **PDF processing** for direct academic paper analysis
+- **Citation network** building for research paper relationships
+- **Real-time monitoring** for research topic updates
+- **Multi-language support** for non-English academic sources
+- **Custom source plugins** for specialized databases
+
+### Scalability Features
+- **Asynchronous processing** for large-scale research
+- **Caching mechanisms** for frequently accessed sources
+- **Rate limit optimization** across all APIs
+- **Parallel processing** for multiple research queries
 
 ## 🤝 Contributing
 
-I welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for:
-- Bug reports and feature requests
-- Code improvements and optimizations
+Contributions are welcome! Areas for contribution:
+- Additional academic source integrations
+- Enhanced validation algorithms
+- Performance optimizations
+- Testing improvements
 - Documentation enhancements
-- New research sources and integrations
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙋‍♂️ Support
+## 🙏 Acknowledgments
 
-- **Issues**: [GitHub Issues](https://github.com/Arbaz123-git/Deep_research_agent/issues)
-
----
-
-**Ready to start researching?** Run `python deep_agent.py` and ask your first question! 🎯
-
-*Built with ❤️ by the Deep Research Agent Enthusiast*
+- **LangGraph Team**: For the excellent graph-based AI framework
+- **Tavily**: For reliable web search API
+- **ArXiv**: For open access to cutting-edge research papers
+- **PubMed**: For comprehensive biomedical literature access
+- **Groq**: For high-performance LLM inference
+- **Academic Community**: For the open science movement making this research possible
